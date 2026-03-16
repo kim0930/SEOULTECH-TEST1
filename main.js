@@ -2,6 +2,48 @@
 const generateButton = document.getElementById('generate');
 const numbersContainer = document.getElementById('numbers');
 const themeSwitch = document.getElementById('checkbox');
+const infoHeader = document.getElementById('info-header');
+
+// Function to update date and weather
+async function updateInfo() {
+    const now = new Date();
+    const dateString = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+    
+    let weatherString = "날씨 정보를 불러오는 중...";
+    
+    try {
+        // Use geolocation to get coordinates
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const { latitude, longitude } = position.coords;
+            const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+            const data = await response.json();
+            const temp = data.current_weather.temperature;
+            const weatherCode = data.current_weather.weathercode;
+            
+            // Simple mapping of WMO weather codes
+            const weatherMap = {
+                0: "☀️ 맑음",
+                1: "🌤️ 대체로 맑음", 2: "⛅ 구름 조금", 3: "☁️ 흐림",
+                45: "🌫️ 안개", 48: "🌫️ 서리 안개",
+                51: "🌦️ 가벼운 이슬비", 53: "🌦️ 이슬비", 55: "🌦️ 강한 이슬비",
+                61: "🌧️ 가벼운 비", 63: "🌧️ 비", 65: "🌧️ 강한 비",
+                71: "❄️ 가벼운 눈", 73: "❄️ 눈", 75: "❄️ 강한 눈",
+                95: "⛈️ 뇌우"
+            };
+            
+            const weatherDesc = weatherMap[weatherCode] || "날씨 정보 없음";
+            weatherString = `${weatherDesc} (${temp}°C)`;
+            infoHeader.innerHTML = `<span>${dateString}</span> | <span>${weatherString}</span>`;
+        }, () => {
+            // Fallback if geolocation is denied
+            infoHeader.innerHTML = `<span>${dateString}</span> | <span>📍 위치 권한 필요</span>`;
+        });
+    } catch (error) {
+        infoHeader.innerHTML = `<span>${dateString}</span> | <span>날씨 오류</span>`;
+    }
+}
+
+updateInfo();
 
 // Function to set the theme
 function setTheme(isLight) {
